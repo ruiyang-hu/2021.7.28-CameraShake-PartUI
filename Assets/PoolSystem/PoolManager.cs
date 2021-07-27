@@ -8,6 +8,7 @@ public class PoolManager : MonoBehaviour
     [SerializeField] Pool[] ground;
     [SerializeField] Pool[] platforms;
     [SerializeField] Pool[] traps;
+    [SerializeField] Pool[] fruits;
 
     static Dictionary<GameObject, Pool> dictionary;
 
@@ -86,6 +87,18 @@ public class PoolManager : MonoBehaviour
         }
 #endif
         return dictionary[prefab].preparedObject(position);
+    }
+
+    public static GameObject Release(GameObject prefab, Vector3 position, GameObject parent)
+    {
+#if UNITY_EDITOR
+        if (!dictionary.ContainsKey(prefab))
+        {
+            Debug.LogError("Pool Manager could NOT find prefab:  " + prefab.name);
+            return null;
+        }
+#endif
+        return dictionary[prefab].preparedObject(position, parent);
     }
 
 

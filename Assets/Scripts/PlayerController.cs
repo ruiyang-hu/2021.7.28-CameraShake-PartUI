@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using DG.Tweening;
 
 public class PlayerController : MonoBehaviour
@@ -9,12 +10,13 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
     public bool isInvincible = false;
     public int life = 5;
+    public GameObject shadowPrefab;
 
     [Header("左右移动")]
+    private float horizontalMove;
     public float speed;
     public float accelerateTime;
     public float decelerateTime;
-
     private float velocityX;
     private bool canMove = true;
 
@@ -28,10 +30,9 @@ public class PlayerController : MonoBehaviour
     public float jumpForce;
     public float fallMultiplier;
     public float lowJumpMultiplier;
-    public bool isJump;
+    public bool isJumping;
     public bool doubleJump = false;
     public int jumpCount;
-
     private bool jumpPressed;
     private bool canJump = true;
 
@@ -39,19 +40,21 @@ public class PlayerController : MonoBehaviour
     public float dashForce;
     public float dragMaxForce;
     public float dragDuration;
-    public float dashWaitTime;
-
+    public float dashTime;// dash时长
+    private float dashTimeLeft;// 冲锋剩余时间
+    private float lashDashTime = -10f;// 上一次dash的时间点
+    public float dashCoolDown;
     private bool isDashing;
-    private bool wasDashed;
     private Vector2 dashDirection;
+
+    [Header("CD的UI组件")]
+    public Image cdImage;
 
     [Header("弹跳板")]
     public float trampolineForce;
 
     [Header("风扇")]
     public float fanForce;
-
-
 
     private bool playerIsDead;
 
@@ -69,6 +72,17 @@ public class PlayerController : MonoBehaviour
         {
             jumpPressed = true;
         }
+
+        if (Input.GetButtonDown("Dash"))
+        {
+            if(Time.time >= lashDashTime + dashCoolDown)
+            {
+                //可以执行dash
+                ReadyToDash();
+            }
+        }
+
+        cdImage.fillAmount -= 1.0f / dashCoolDown * Time.deltaTime;
 
     }
 
@@ -111,7 +125,7 @@ public class PlayerController : MonoBehaviour
     #region 角色跑动
     void Movement()
     {
-        float horizontalMove = Input.GetAxisRaw("Horizontal");
+        horizontalMove = Input.GetAxisRaw("Horizontal");
         animator.SetFloat("running", Mathf.Abs(horizontalMove));
         if (horizontalMove > 0)
         {
@@ -136,19 +150,19 @@ public class PlayerController : MonoBehaviour
         if (isOnGround)// 检测接触到地面：跳跃次数恢复；是否在跳跃为否
         {
             jumpCount = doubleJump ? 2 : 1;
-            isJump = false;
+            isJumping = false;
         }
 
         if(jumpPressed && isOnGround)// 如果在地面上且按下跳跃键：是否跳跃为是；加Y轴力；跳跃次数-1；是否按下跳跃键为否
         {
-            isJump = true;
+            isJumping = true;
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpCount --;
             jumpPressed = false;
         }
         else if(jumpPressed && jumpCount > 0 && !isOnGround)// 如果不在地面上且按下跳跃键且跳跃次数大于0：加Y轴力；跳跃次数-1；是否按下跳跃键为否
         {
-            isJump = true;
+            isJumping = true;
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpCount--;
             jumpPressed = false;
@@ -168,40 +182,54 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region 角色冲刺
+    void ReadyToDash()
+    {
+        isDashing = true;
+
+        dashTimeLeft = dashTime;
+
+        lashDashTime = Time.time;
+
+        cdImage.fillAmount = 1;
+    }
     void Dash()
     {
         Vector2 tempDir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        if (Input.GetAxisRaw("Dash") == 1 && !wasDashed)
+        if (isDashing)
         {
-            wasDashed = true;
-            ShadowPool.instance.GetFromPool();
-            if (tempDir != Vector2.zero)
+            if(dashTimeLeft > 0)
             {
-                dashDirection = tempDir + Vector2.up * 0.05f;
-            }
-            else
-            {
-                if (rb.transform.localScale.x > 0)
+                if (tempDir != Vector2.zero)
                 {
-                    dashDirection = Vector2.right + Vector2.up * 0.05f;
+                    dashDirection = tempDir;
                 }
                 else
                 {
-                    dashDirection = Vector2.left + Vector2.up * 0.05f;
+                    if (rb.transform.localScale.x > 0)
+                    {
+                        dashDirection = Vector2.right;
+                    }
+                    else
+                    {
+                        dashDirection = Vector2.left;
+                    }
                 }
-            }
-            //将玩家当前所有的动量清零
-            rb.velocity = Vector2.zero;
-            //施加一个力，让玩家飞出去
-            rb.velocity += dashDirection * dashForce;
-            
-            animator.SetBool("dashing", true);
-            StartCoroutine(DashControl());
-        }
 
-        if(isOnGround && Input.GetAxisRaw("Dash") == 0)
-        {
-            wasDashed = false;
+                //将玩家当前所有的动量清零
+                rb.velocity = Vector2.zero;
+                //施加一个力，让玩家飞出去
+                rb.AddForce(new Vector2(dashDirection.x * dashForce * 0.9f, dashDirection.y * dashForce * 0.7f), ForceMode2D.Impulse);
+                //rb.velocity = new Vector2(dashDirection.x * dashForce * 0.9f, dashDirection.y * dashForce * 0.7f);
+                animator.SetBool("dashing", true);
+                StartCoroutine(DashControl());
+
+                dashTimeLeft -= Time.fixedDeltaTime;
+                PoolManager.Release(shadowPrefab);
+            }
+            else
+            {
+                isDashing = false;
+            }
         }
     }
 
@@ -219,11 +247,11 @@ public class PlayerController : MonoBehaviour
         //施加空气阻力(Rigidbody.Drag)
         DOVirtual.Float(dragMaxForce, 0, dragDuration, RigidbodyDrag);
         //等待一段时间
-        yield return new WaitForSeconds(dashWaitTime);
+        yield return new WaitForSeconds(dashTime);
         //开启所有关闭的东西
         canMove = true;
         canJump = true;
-        rb.gravityScale = 2;
+        rb.gravityScale = 1.5f;
         isInvincible = false;
     }
     public void RigidbodyDrag(float x)

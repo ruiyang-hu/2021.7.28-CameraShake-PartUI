@@ -26,7 +26,7 @@ public class MoveUp : MonoBehaviour
         transform.position += movement * Time.deltaTime;
         if (transform.position.y >= topLine.transform.position.y)
         {
-            Destroy(gameObject);
+            gameObject.SetActive(false);
         }
     }
 

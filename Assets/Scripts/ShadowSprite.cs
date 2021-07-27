@@ -41,14 +41,14 @@ public class ShadowSprite : MonoBehaviour
     {
         alpha *= alphaMultiplier;
 
-        color = new Color(0.5f, 0.5f, 1, alpha);
+        color = new Color(0.5f, 0.5f, 0.9f, alpha);
 
         thisSprite.color = color;
 
         if(Time.time >= activeStart + activeTime)
         {
             // 返回对象池
-            ShadowPool.instance.ReturnPool(this.gameObject);
+            this.gameObject.SetActive(false);
         }
     }
 }

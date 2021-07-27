@@ -85,6 +85,17 @@ using UnityEngine;
         return preparedObject;
     }
 
+    public GameObject preparedObject(Vector3 position, GameObject parent)
+    {
+        GameObject preparedObject = AvailableObject();
+
+        preparedObject.SetActive(true);
+        preparedObject.transform.position = position;
+        preparedObject.transform.SetParent(parent.transform);
+
+        return preparedObject;
+    }
+
     public GameObject preparedObject(Vector3 position, Quaternion rotation)
     {
         GameObject preparedObject = AvailableObject();

@@ -23,19 +23,10 @@ public class StartController : MonoBehaviour
         {
             flagTouched = true;
             animator.SetBool("go", true);
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                transform.GetChild(i).gameObject.SetActive(false);
+            }
         }
     }
-
-    public static bool FlagTouched(StartController sc)
-    {
-        return sc.flagTouched;
-    }
-
-    //public bool FlagTouched
-    //{
-    //    get
-    //    {
-    //        return flagTouched;
-    //    }
-    //}
 }

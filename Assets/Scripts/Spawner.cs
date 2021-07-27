@@ -4,22 +4,23 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
+    private int spawnCount = 0;
+    private int haveFlag;
+
     public List<GameObject> platforms = new List<GameObject>();
     public List<GameObject> groundObjects = new List<GameObject>();
-    public LayerMask checkLayer;
 
     public float spawnTime;
     private float countTimeP;
     private float countTimeG;
     private Vector3 spawnPosition;
-    private Vector3 brickSpawnPosition = new Vector3(-4.75f, -7.75f, 0f);
-    private Vector3 flagPosition = new Vector3(-4f, -6.55f, 0f);
+    private Vector3 brickSpawnPosition = new Vector3(-4.75f, -9.5f, 0f);
+    private Vector3 flagPosition = new Vector3(-4f, -8.3f, 0f);
     private int spikeNum = 0;
 
     // Update is called once per frame
     void Update()
     {
-        //SpawnPlatform();
         SpawnGround();
     }
 
@@ -67,57 +68,58 @@ public class Spawner : MonoBehaviour
     public void createGround()
     {
         List<GameObject> ground_brick = new List<GameObject>();
-        List<GameObject> ground_brickOff = new List<GameObject>();
+        haveFlag = Random.Range(1, 5);
+        //释放地板砖快
         for (int i = 0; i < 20; i++)
         {
-            GameObject newBrick = Instantiate(groundObjects[0], brickSpawnPosition + Vector3.right * i * 0.5f, Quaternion.identity);
-            ground_brick.Add(newBrick);
-            GameObject newBrickOff = Instantiate(groundObjects[1], brickSpawnPosition + Vector3.right * i * 0.5f, Quaternion.identity);
-            newBrickOff.SetActive(false);
-            ground_brickOff.Add(newBrickOff);
+            ground_brick.Add(PoolManager.Release(groundObjects[0], brickSpawnPosition + Vector3.right * i * 0.5f));
+            spawnCount++;
         }
-
-        System.Random r = new System.Random();
-        int temp = (r.Next() & 2) - 1;
-        GameObject newFlag = Instantiate(groundObjects[2], flagPosition + new Vector3(4, 0, 0) * (temp + 1), Quaternion.identity);
-        newFlag.transform.localScale = new Vector3(-temp, newFlag.transform.localScale.y, newFlag.transform.localScale.z);
-        StartController sc = newFlag.gameObject.GetComponent<StartController>();
-
-        int removeStartLeft = Random.Range(2, 6);
-        int removeStartRight = Random.Range(12, 15);
-        
-        if (temp == -1)
+        //释放旗子
+        if(haveFlag == 1)
         {
-            for (int i = 0; i < 4; i++)
+            System.Random r = new System.Random();
+            int temp = (r.Next() & 2) - 1;
+            var newFlag = createFlag(temp);
+            int removeStartLeft = Random.Range(2, 6);
+            int removeStartRight = Random.Range(12, 15);
+
+            if (temp == -1)
             {
-                ground_brick[removeStartRight + i].SetActive(false);
-                GameObject newBrickOff = Instantiate(groundObjects[1], brickSpawnPosition + Vector3.right * 0.5f * removeStartRight * (i + 1), Quaternion.identity);
+                for (int i = 0; i < 4 - Random.Range(0, 2); i++)
+                {
+                    ground_brick[removeStartRight + i].SetActive(false);
+                    createBrickOff(removeStartRight + i, newFlag);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 4 - Random.Range(0, 2); i++)
+                {
+                    ground_brick[removeStartLeft + i].SetActive(false);
+                    createBrickOff(removeStartLeft + i, newFlag);
+                }
             }
         }
         else
         {
-            for (int i = 0; i < 4; i++)
+            int removeStart = Random.Range(0, 17);
+            for (int i = 0; i < 4 - Random.Range(0, 2); i++)
             {
-                ground_brick[removeStartLeft + i].SetActive(false);
-                GameObject newBrickOff = Instantiate(groundObjects[1], brickSpawnPosition + Vector3.right * 0.5f * removeStartLeft * (i + 1), Quaternion.identity);
+                ground_brick[removeStart + i].SetActive(false);
             }
         }
-
-        if (sc.flagTouched)
-        {
-            foreach (var item in ground_brickOff)
-            {
-                item.SetActive(false);
-            }
-        }
-
+        
     }
 
-    public void createFlag()
+    public GameObject createFlag(int temp)
     {
-        System.Random r = new System.Random();
-        int temp = (r.Next() & 2) - 1;
-        GameObject newFlag = Instantiate(groundObjects[0], flagPosition + new Vector3(4, 0, 0) * (temp + 1), Quaternion.identity);
-        newFlag.transform.localScale = new Vector3(-temp, newFlag.transform.localScale.y, newFlag.transform.localScale.z);
+        var newFlag = PoolManager.Release(groundObjects[2], flagPosition + new Vector3(4, 0, 0) * (temp + 1), Quaternion.identity, new Vector3(-temp, 1, 1));
+        return newFlag;
+    }
+
+    public void createBrickOff(int removeStart, GameObject parent)
+    {
+        var newBrickOff = PoolManager.Release(groundObjects[1], brickSpawnPosition + Vector3.right * 0.5f * removeStart, parent);
     }
 }
