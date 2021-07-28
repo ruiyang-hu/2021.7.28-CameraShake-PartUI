@@ -7,8 +7,10 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     static GameManager instance;
+    float gameTime;
+    public static int levelTime = 30;
+    public static int currentLevel;
 
-    public Text timeScore;
     public GameObject gameOverUI;
 
     private void Awake()
@@ -20,10 +22,17 @@ public class GameManager : MonoBehaviour
         instance = this;
     }
 
-    // Update is called once per frame
+    private void Start()
+    {
+    }
+
     void Update()
     {
-        timeScore.text = Time.timeSinceLevelLoad.ToString("00");
+        gameTime += Time.deltaTime;
+        currentLevel = (int)gameTime / levelTime + 1;
+        //UIManager
+        UIManager.UpdateTimeUI(gameTime);
+        UIManager.UpdateLevelUI(currentLevel);
     }
 
     public void RestartGame()
@@ -45,4 +54,5 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 0;
         }
     }
+
 }

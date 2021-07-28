@@ -5,19 +5,21 @@ using UnityEngine;
 public class MoveUp : MonoBehaviour
 {
     Vector3 movement;
-    private float speed = 1f;
+    public float moveUpSpeed;
     GameObject topLine;
 
     // Start is called before the first frame update
     void Start()
     {
-        movement.y = speed;
         topLine = GameObject.Find("TopLine");
     }
 
     // Update is called once per frame
     void Update()
     {
+        //moveUpSpeed = (int)GameManager.gameTime / (int)GameManager.levelTime * 0.2f + 1;
+        moveUpSpeed = (GameManager.currentLevel - 1) * 0.2f + 1;
+        movement.y = moveUpSpeed;
         Move();
     }
 

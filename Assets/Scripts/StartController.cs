@@ -7,22 +7,23 @@ public class StartController : MonoBehaviour
     private Animator animator;
     new private Collider2D collider;
     public LayerMask checkLayer;
-    public bool flagTouched = false;
    
-    // Start is called before the first frame update
     void Start()
     {
         animator = GetComponent<Animator>();
         collider = GetComponent<Collider2D>();
     }
 
-    // Update is called once per frame
     void Update()
+    {
+        FlagTouch();
+    }
+
+    public void FlagTouch()
     {
         if (collider.IsTouchingLayers(checkLayer))
         {
-            flagTouched = true;
-            animator.SetBool("go", true);
+            animator.SetTrigger("FlagOut");
             for (int i = 0; i < transform.childCount; i++)
             {
                 transform.GetChild(i).gameObject.SetActive(false);

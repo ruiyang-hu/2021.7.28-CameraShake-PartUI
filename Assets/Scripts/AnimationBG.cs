@@ -6,7 +6,7 @@ public class AnimationBG : MonoBehaviour
 {
     Material material;
     Vector2 movement;
-    private Vector2 speed = Vector2.down * 0.5f;
+    private float speed;
 
     // Start is called before the first frame update
     void Start()
@@ -17,7 +17,8 @@ public class AnimationBG : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        movement += speed * Time.deltaTime;
+        speed = ((GameManager.currentLevel - 1) * 0.2f + 1) * 0.5f;
+        movement.y -= speed * Time.deltaTime;
         material.mainTextureOffset = movement;
     }
 }

@@ -68,7 +68,7 @@ public class Spawner : MonoBehaviour
     public void createGround()
     {
         List<GameObject> ground_brick = new List<GameObject>();
-        haveFlag = Random.Range(1, 5);
+        haveFlag = Random.Range(1, 2);
         //释放地板砖快
         for (int i = 0; i < 20; i++)
         {

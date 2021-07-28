@@ -47,6 +47,10 @@ public class PlayerController : MonoBehaviour
     private bool isDashing;
     private Vector2 dashDirection;
 
+    [Header("冲刺震动")]
+    public int dashPause;
+    public float dashStrength;
+
     [Header("CD的UI组件")]
     public Image cdImage;
 
@@ -191,13 +195,19 @@ public class PlayerController : MonoBehaviour
         lashDashTime = Time.time;
 
         cdImage.fillAmount = 1;
+
+        //AttackSense.Instance.HitPause(dashPause);
+        AttackSense.Instance.CameraShake(dashTime, dashStrength);
+        
     }
     void Dash()
     {
         Vector2 tempDir = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        if (isDashing)
+        if (dashTimeLeft > 0)
         {
-            if(dashTimeLeft > 0)
+            dashTimeLeft -= Time.fixedDeltaTime;
+            PoolManager.Release(shadowPrefab);
+            if (isDashing)
             {
                 if (tempDir != Vector2.zero)
                 {
@@ -221,15 +231,13 @@ public class PlayerController : MonoBehaviour
                 rb.AddForce(new Vector2(dashDirection.x * dashForce * 0.9f, dashDirection.y * dashForce * 0.7f), ForceMode2D.Impulse);
                 //rb.velocity = new Vector2(dashDirection.x * dashForce * 0.9f, dashDirection.y * dashForce * 0.7f);
                 animator.SetBool("dashing", true);
+                //StartCoroutine(DashControl());
                 StartCoroutine(DashControl());
-
-                dashTimeLeft -= Time.fixedDeltaTime;
-                PoolManager.Release(shadowPrefab);
             }
-            else
-            {
-                isDashing = false;
-            }
+            //else
+            //{
+            //    isDashing = false;
+            //}
         }
     }
 
@@ -237,10 +245,11 @@ public class PlayerController : MonoBehaviour
     {
         //关闭玩家的移动和跳跃功能
         //关闭重力调整器
+        isDashing = false;
         canMove = false;
         canJump = false;
         //关闭重力影响
-        rb.gravityScale = 0;
+        rb.gravityScale = -0.2f;
         // 设置无敌帧
         isInvincible = true;
         
@@ -251,7 +260,7 @@ public class PlayerController : MonoBehaviour
         //开启所有关闭的东西
         canMove = true;
         canJump = true;
-        rb.gravityScale = 1.5f;
+        rb.gravityScale = 1.8f;
         isInvincible = false;
     }
     public void RigidbodyDrag(float x)
@@ -302,7 +311,6 @@ public class PlayerController : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.05f);
         }
-
     }
 
     // 触发器停留
